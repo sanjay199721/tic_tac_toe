@@ -62,7 +62,7 @@ def main():
         else:
             pygame.draw.rect(screen,color_dark,[screen_width/2-60,screen_height/2,140,30])
 
-        pygame.display.flip()
+        #pygame.display.flip()
         # event handling, gets all event from the event queue
         for event in pygame.event.get():
             # only do something if the event is of type QUIT
@@ -71,7 +71,8 @@ def main():
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if screen_width/2-60<mouse[0]<screen_width/2+80 and screen_height/2<mouse[1]<screen_height/2+30:
-                    running = False
+                    screen.fill(color_dark)
+                    pygame.display.flip()
 
 
 
