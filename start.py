@@ -1,86 +1,106 @@
-	
-# import the pygame module, so you can use it
-import pygame
- 
-# define a main function
+import pygame as pg
+import random
+import os
+from enum import Enum
+
+SCREENRECT = pg.Rect(0,0,640,480)
+red_color = (200,20,30)
+black_color = (20,20,20)
+color_light = (170,170,170)
+color_dark = (100,100,100)
+
+class game_status(Enum):
+    MAIN_MENU = 0
+    GAME_PLAY = 1
+    GAME_END = 2
+
+
+pg.init()
+
+
+font_1 = pg.font.SysFont('Corbel',50)
+font_2 = pg.font.SysFont('Arial',20)
+font_3 = pg.font.Font("BaiJamjuree-Bold.ttf",50)
+
+clock = pg.time.Clock()
+all = pg.sprite.RenderUpdates()
+
+class GlobalState:
+    GAME_STATE = game_status.MAIN_MENU
+    SCREEN = None
+    def __init__(self):
+        screen = pg.display.set_mode(SCREENRECT.size)
+        background = pg.Surface(SCREENRECT.size)
+        background.fill(red_color)
+        screen.blit(background,(0,0))
+        title = font_3.render("Tic-Tac-Toe",True,black_color)
+        title_rect = title.get_rect(center = (SCREENRECT.width//2,100))
+        background.blit(title,title_rect)
+        
+        screen.blit(background,(0,0))
+        pg.display.flip()
+        smileyball.containers = all
+        smileyball()
+        GlobalState.BGD = background
+        GlobalState.SCREEN = screen
+
+main_dir = os.path.split(os.path.abspath(__file__))[0]
+
+def load_image(file):
+    file = os.path.join(main_dir,file)
+    surface = pg.image.load(file)
+    return surface#.convert()
+
+def load_sound(file):
+    file = os.path.join(main_dir,file)
+    sound = pg.mixer.Sound(file)
+    return sound
+        
+class smileyball(pg.sprite.Sprite):
+
+    image = load_image("Smiley.svg.png")
+    image_small = pg.transform.scale(image,(50,50))
+    speed = 10
+    
+    def __init__(self):
+        pg.sprite.Sprite.__init__(self,self.containers)
+        self.image = self.image_small
+        self.rect = self.image.get_rect(midbottom = SCREENRECT.midbottom)
+        self.top_facing = 1
+        self.right_facing = 1
+    
+    def update(self):
+        #print(self.rect.top,self.rect.bottom)
+        self.rect.move_ip(self.speed*self.right_facing,self.speed*self.top_facing*(4/3))
+        if self.rect.right>SCREENRECT.right or self.rect.left<SCREENRECT.left:
+            self.right_facing = self.right_facing*-1
+        if self.rect.top<SCREENRECT.top or self.rect.bottom>SCREENRECT.bottom:
+            self.top_facing = self.top_facing*-1
+        
+def update_main_menu():
+
+    clock.tick(40)
+    all.clear(GlobalState.SCREEN,GlobalState.BGD)
+    all.update()
+    
+    dirty = all.draw(GlobalState.SCREEN)
+    pg.display.update(dirty)
+    events = pg.event.get()
+    for event in events:
+        if event.type == pg.QUIT:
+            GlobalState.GAME_STATE = game_status.GAME_END
+        elif event.type == pg.KEYDOWN:
+            GlobalState.GAME_STATE = game_status.GAME_END
+    return 
+
 def main():
-     
-    # initialize the pygame module
-    pygame.init()
-    # load and set the logo
-    logo = pygame.image.load("logo32x32.png")
-    pygame.display.set_icon(logo)
-    pygame.display.set_caption("minimal program")
-     
-    # create a surface on screen that has the size of 240 x 180
-    screen_width = 640
-    screen_height = 480
-    red_color = (200,20,30)
-    black_color = (20,20,20)
-    color_light = (170,170,170)
-    color_dark = (100,100,100)
-    screen = pygame.display.set_mode((screen_width,screen_height))
-    screen.fill(red_color)
-    image = pygame.image.load("Smiley.svg.png")
-    image_small = pygame.transform.scale(image,(50,50))
-    #screen.blit(image_small,(50,50))
-    #pygame.display.flip()
-    x1 = 50
-    y1 = 50
-    step_x = 50
-    step_y = 50 
-    font_1 = pygame.font.SysFont('Corbel',50)
-    text_1 = font_1.render('Tic-Tac-Toe',True,black_color)
-    font_2 = pygame.font.SysFont('Arial',20)
-    text_2 = font_2.render('Play with computer',True,black_color)
 
-
-    print(screen.get_height())
-    # define a variable to control the main loop
-    running = True
-     
-    # main loop
-    i = 0
-    while running:
-        i += 1
-        screen.blit(text_1,(screen_width/2-100,screen_height/2-100))
-        screen.blit(text_2,(screen_width/2-60,screen_height/2))
-        pygame.display.update()
-        if i%1000==0:
-            if x1>screen_width-64 or x1<0:
-                step_x = -step_x
-            if y1>screen_height-64 or y1<0:
-                step_y = -step_y
-            x1 += step_x
-            y1 += step_y
-            screen.fill(red_color)
-            screen.blit(image_small,(x1,y1))
-            pygame.display.flip()
-        mouse = pygame.mouse.get_pos()
-        if screen_width/2-60<mouse[0]<screen_width/2+80 and screen_height/2<mouse[1]<screen_height/2+30:
-            pygame.draw.rect(screen,color_light,[screen_width/2-60,screen_height/2,140,30])
-        else:
-            pygame.draw.rect(screen,color_dark,[screen_width/2-60,screen_height/2,140,30])
-
-        #pygame.display.flip()
-        # event handling, gets all event from the event queue
-        for event in pygame.event.get():
-            # only do something if the event is of type QUIT
-            if event.type == pygame.QUIT:
-                # change the value to False, to exit the main loop
-                running = False
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if screen_width/2-60<mouse[0]<screen_width/2+80 and screen_height/2<mouse[1]<screen_height/2+30:
-                    screen.fill(color_dark)
-                    pygame.display.flip()
-
-
-
-            
-     
-     
-# run the main function only if this module is executed as the main script
-# (if you import this as a module then nothing is executed)
+    logo = load_image("logo32x32.png")
+    pg.display.set_icon(logo)
+    pg.display.set_caption("Tic Tac Toe")
+    GlobalState()
+    while GlobalState.GAME_STATE == game_status.MAIN_MENU:
+        update_main_menu()
+    pg.quit()
 if __name__=="__main__":
-    # call the main function
     main()
