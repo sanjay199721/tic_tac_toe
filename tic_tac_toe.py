@@ -103,6 +103,8 @@ class Main_Menu:
 
 
 main_dir = os.path.split(os.path.abspath(__file__))[0]
+with open('minimax_table.txt') as f:
+    stored = eval(str(f.read()))
 
 def load_image(file):
     file = os.path.join(main_dir,file)
@@ -148,7 +150,8 @@ class Play(pg.sprite.Sprite):
     grid_points = [(214,427),(160,320)]
     xo_points = [(10,224,437),(10,170,330)]
 
-    def __init__(self,bot,xo):
+
+    def __init__(self,bot,xo,rand = False):
         pg.sprite.Sprite.__init__(self,self.containers)
         background = pg.Surface(SCREENRECT.size)
         background.fill("blue")
@@ -162,9 +165,7 @@ class Play(pg.sprite.Sprite):
         self.xo = xo
         self.bot_ = bot
         self.turn = 1
-        #self.Board = Board()
-        #pg.display.update()
-
+        self.rand = rand
         #pg.time.wait(1000)
     def update(self):
         clock.tick(10)
@@ -208,7 +209,7 @@ class Play(pg.sprite.Sprite):
             return pa_rect
             
         if self.bot_ and  GlobalState.GAME_STATE == game_status.GAME_PLAY and (self.turn != self.xo):
-            self.bot_output()
+            self.bot_output(self.rand)
             self.add_xo()
             self.turn = self.turn*-1
 
@@ -252,15 +253,58 @@ class Play(pg.sprite.Sprite):
             self.n = 1
         elif (self.grid_points[1][1])<y:
             self.n = 2
-    def bot_output(self):
-
-        m = random.randint(0,2)
-        n = random.randint(0,2)
-        while(self.array[m][n]!=0):
+    def bot_output(self,rand = True):
+        if rand:
             m = random.randint(0,2)
             n = random.randint(0,2)
-        self.m = m
-        self.n = n
+            while(self.array[m][n]!=0):
+                m = random.randint(0,2)
+                n = random.randint(0,2)
+            self.m = m
+            self.n = n
+        else:
+            if str(self.array) in stored.keys(): 
+                _,(self.m,self.n) = stored[str(self.array)]
+            else:
+                _,(self.m,self.n) = minimax(self.array,self.turn)
+            while(self.array[self.m][self.n]!=0):
+                self.m = random.randint(0,2)
+                self.n = random.randint(0,2)
+                        
+def minimax(array,xo):
+    global stored
+    if str(array) in stored.keys():
+        return stored[str(array)]
+    if check_game(array)!=0:
+        return check_game(array),0
+    if xo==1:
+        best_score = -np.inf
+        for i in np.argwhere(array==0):
+            y = np.copy(array)
+            y[i[0]][i[1]]= 1
+            score,act = minimax(y,xo*-1)
+            if str(y) not in stored.keys():
+                stored[str(y)] = (score,(act))
+            if score>best_score:
+                best_score = score
+                best_action = i
+        if str(array) not in stored.keys():
+            stored[str(array)] = (best_score,tuple(best_action))
+        return best_score,tuple(best_action)
+    else:
+        best_score = np.inf
+        for i in np.argwhere(array==0):
+            y = np.copy(array)
+            y[i[0]][i[1]]= -1
+            score,act = minimax(y,xo*-1)
+            if str(y) not in stored.keys():
+                stored[str(y)] = (score,act)
+            if score<best_score:
+                best_score = score
+                best_action = i
+        if str(array) not in stored.keys():
+            stored[str(array)] = (best_score,tuple(best_action))
+        return best_score,tuple(best_action)
 
 
 def check_game(array):
@@ -292,7 +336,7 @@ def main():
             c = mm.update()
         if GlobalState.GAME_STATE == game_status.GAME_PLAY:
             
-            z = Play(abs(c),c)
+            z = Play(abs(c),c,False)
             while GlobalState.GAME_STATE == game_status.GAME_PLAY:
                 t = z.update()
                 #print(t)
@@ -308,12 +352,12 @@ def main():
 
 
             z.kill()
-            #pg.time.wait(1000)
-
-    #while GlobalState.GAME_STATE == game_status.GAME_PLAY:
+    f = open("minimax_table.txt","w")
+    f.write(str(stored))
+    f.close()
 
     pg.quit()
 if __name__=="__main__":
     main()
 
-    """pyinstaller --add-data "BaiJamjuree-Blod.ttf;." --add-data "hash-removebg-preview.png;." --add-data "logo32x32.png;." --add-data "o_image.png;." --add-data "x__1_-removebg-preview.png;." --add-data "Smiley.svg.png;."  start.py"""
+    """pyinstaller --add-data "BaiJamjuree-Bold.ttf;." --add-data "hash-removebg-preview.png;." --add-data "logo32x32.png;." --add-data "o_image.png;." --add-data "x__1_-removebg-preview.png;." --add-data "Smiley.svg.png;."  start.py"""
